@@ -26,15 +26,8 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                php: [ '7.4', '7.3', '7.2' ]
-                typo3: [ '^10.4', '^9.5', '^8.7' ]
-                include:
-                    -   php: '7.4'
-                        typo3: '~11.1.0'
-                    -   php: '7.1'
-                        typo3: '^8.7'
-                    -   php: '7.0'
-                        typo3: '^8.7'
+                php: [ '7.4' ]
+                typo3: [ '^10.4' ]
         runs-on: ubuntu-latest
         services:
             mysql:
