@@ -139,7 +139,7 @@ jobs:
                 run: |
                     composer config minimum-stability dev
                     composer config prefer-stable true
-                    composer require --no-progress --no-suggest --no-update typo3/cms-core:"@dev"
+                    composer require --no-progress --no-suggest --no-update typo3/cms-backend:"@dev"
                     composer require --no-progress --no-suggest --no-update nimut/typo3-complete:"${{ matrix.typo3 }}"
                     composer update
                     git checkout composer.json
