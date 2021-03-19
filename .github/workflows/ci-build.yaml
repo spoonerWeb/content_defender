@@ -14,7 +14,7 @@ on:
 
 env:
     extensionKey: content_defender
-    TYPO3_PATH_ROOT: ./.Build/public
+    TYPO3_PATH_ROOT: ${{ github.workspace }}/.Build/public
     typo3DatabaseHost: 127.0.0.1
     typo3DatabaseName: typo3
     typo3DatabaseUsername: root
