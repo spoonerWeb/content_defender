@@ -101,9 +101,6 @@ jobs:
                     -   php: '7.4'
                         typo3: 'dev-master'
                         experimental: true
-                    -   php: '7.4'
-                        typo3: '11.1.x-dev'
-                        experimental: false
                     -   php: '7.1'
                         typo3: '8.7.x-dev'
                         experimental: false
@@ -183,9 +180,6 @@ jobs:
                     -   php: '7.4'
                         typo3: '~11.1.0'
                         experimental: false
-                    -   php: '7.4'
-                        typo3: '11.1.x-dev'
-                        experimental: false
                     -   php: '7.1'
                         typo3: '^8.7'
                         experimental: false
@@ -230,6 +224,7 @@ jobs:
                         ${{ runner.os }}-composer-
             -   name: Install
                 run: |
+                    composer require --no-progress --no-suggest --no-update typo3/cms-composer-installers:"^1.5 || ^2.0"
                     composer require --no-progress --no-suggest --no-update --prefer-lowest nimut/typo3-complete:"$TYPO3"
                     composer update
                     git checkout composer.json
