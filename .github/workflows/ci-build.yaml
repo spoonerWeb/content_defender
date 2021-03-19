@@ -131,7 +131,7 @@ jobs:
                     if [ -d "Tests" ]; then
                         for TYPO3 in $TYPO3; do
                             echo "Running TYPO3 version $TYPO3"
-                            git clean -Xdf
+                            git clean -xdf -e .Log
                             composer require --dev --no-progress --no-suggest --no-update nimut/typo3-complete:"$TYPO3"
                             composer update
                             git checkout composer.json
