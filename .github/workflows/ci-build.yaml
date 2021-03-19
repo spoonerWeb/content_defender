@@ -95,6 +95,7 @@ jobs:
             matrix:
                 php: [ '7.4', '7.3', '7.2' ]
                 typo3: [ '10.4.x-dev', '9.5.x-dev', '8.7.x-dev' ]
+                experimental: [ false ]
                 include:
                     -   php: '7.4'
                         typo3: 'dev-master'
