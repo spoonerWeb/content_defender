@@ -26,8 +26,15 @@ jobs:
         strategy:
             fail-fast: false
             matrix:
-                php: [ '7.4' ]
-                typo3: [ '^10.4' ]
+                php: [ '7.4', '7.3', '7.2' ]
+                typo3: [ '^10.4', '^9.5', '^8.7' ]
+                include:
+                    -   php: '7.4'
+                        typo3: '~11.1.0'
+                    -   php: '7.1'
+                        typo3: '^8.7'
+                    -   php: '7.0'
+                        typo3: '^8.7'
         runs-on: ubuntu-latest
         services:
             mysql:
@@ -84,6 +91,10 @@ jobs:
     check-with-sonarcloud:
         name: ✔ with sonarcloud scanner
         needs: running-stable-tests
+        if: ${{ github.event_name == 'push' && contains('
+            refs/heads/master
+            refs/heads/pre-merge
+            ', github.ref) && secrets.SONAR_TOKEN != '' }}
         env:
             TYPO3: '^8.7 ^9.5 ^10.4 ~11.1.0'
         runs-on: ubuntu-latest
