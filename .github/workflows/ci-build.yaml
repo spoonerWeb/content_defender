@@ -130,31 +130,32 @@ jobs:
                 run: |
                     if [ -d "Tests" ]; then
                         for TYPO3 in $TYPO3; do
-                            echo "Running TYPO3 version $TYPO3"
-                            git clean -xdf -e .Log
-                            composer require --dev --no-progress --no-suggest --no-update nimut/typo3-complete:"$TYPO3"
-                            composer update
-                            git checkout composer.json
-                            VERSION=${TYPO3//[!0-9]/}
+                            echo "::group::Running TYPO3 version $TYPO3"
+                                git clean -xdf -e .Log
+                                composer require --dev --no-progress --no-suggest --no-update nimut/typo3-complete:"$TYPO3"
+                                composer update
+                                git checkout composer.json
+                                VERSION=${TYPO3//[!0-9]/}
 
-                            mkdir -p .Build/public/typo3conf/ext/
-                            if [ ! -L .Build/public/typo3conf/ext/${{ env.extensionKey }} ]; then ln -snvf ../../../../. .Build/public/typo3conf/ext/${{ env.extensionKey }}; fi
+                                mkdir -p .Build/public/typo3conf/ext/
+                                if [ ! -L .Build/public/typo3conf/ext/${{ env.extensionKey }} ]; then ln -snvf ../../../../. .Build/public/typo3conf/ext/${{ env.extensionKey }}; fi
 
-                            if [ -d "Tests/Unit" ]; then
-                              echo
-                              echo "Running unit tests"
-                              echo
-                              echo
-                              .Build/bin/phpunit --bootstrap .Build/vendor/nimut/testing-framework/res/Configuration/UnitTestsBootstrap.php --log-junit .Log/junit/unit_$VERSION.xml --coverage-php .Log/coverage/unit_$VERSION.cov  --testsuite unit
-                            fi
+                                if [ -d "Tests/Unit" ]; then
+                                  echo
+                                  echo "Running unit tests"
+                                  echo
+                                  echo
+                                  .Build/bin/phpunit --bootstrap .Build/vendor/nimut/testing-framework/res/Configuration/UnitTestsBootstrap.php --log-junit .Log/junit/unit_$VERSION.xml --coverage-php .Log/coverage/unit_$VERSION.cov  --testsuite unit
+                                fi
 
-                            if [ -d "Tests/Functional" ]; then
-                              echo
-                              echo "Running functional tests"
-                              echo
-                              echo
-                              .Build/bin/phpunit --bootstrap .Build/vendor/nimut/testing-framework/res/Configuration/FunctionalTestsBootstrap.php --log-junit .Log/junit/functional_$VERSION.xml --coverage-php .Log/coverage/functional_$VERSION.cov --testsuite functional
-                            fi
+                                if [ -d "Tests/Functional" ]; then
+                                  echo
+                                  echo "Running functional tests"
+                                  echo
+                                  echo
+                                  .Build/bin/phpunit --bootstrap .Build/vendor/nimut/testing-framework/res/Configuration/FunctionalTestsBootstrap.php --log-junit .Log/junit/functional_$VERSION.xml --coverage-php .Log/coverage/functional_$VERSION.cov --testsuite functional
+                                fi
+                            echo "::endgroup::"
                         done
                     fi
             -   name: Merge reports
