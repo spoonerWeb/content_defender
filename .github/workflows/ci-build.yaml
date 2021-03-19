@@ -102,8 +102,10 @@ jobs:
                         experimental: true
                     -   php: '7.1'
                         typo3: '8.7.x-dev'
+                        experimental: false
                     -   php: '7.0'
                         typo3: '8.7.x-dev'
+                        experimental: false
         runs-on: ubuntu-latest
         services:
             mysql:
