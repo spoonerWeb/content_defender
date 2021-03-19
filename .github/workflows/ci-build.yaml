@@ -14,6 +14,7 @@ on:
 
 env:
     extensionKey: content_defender
+    TYPO3_PATH_ROOT: ./.Build/public
     typo3DatabaseHost: 127.0.0.1
     typo3DatabaseName: typo3
     typo3DatabaseUsername: root
@@ -53,7 +54,7 @@ jobs:
                 with:
                     php-version: ${{ matrix.php }}
                     coverage: none
-                    tools: composer:v2
+                    tools: composer:v1
             -   name: Composer cache
                 id: composer-cache
                 run: |
@@ -76,16 +77,100 @@ jobs:
             -   name: Unit tests
                 run: |
                     if [ -d "Tests/Unit" ]; then
-                        .Build/bin/phpunit --bootstrap .Build/vendor/nimut/testing-framework/res/Configuration/UnitTestsBootstrap.php --testsuite unit;
+                        .Build/bin/phpunit --bootstrap .Build/vendor/nimut/testing-framework/res/Configuration/UnitTestsBootstrap.php --testsuite unit
                     fi
             -   name: Functional tests
                 run: |
                     if [ -d "Tests/Functional" ]; then
-                        find 'Tests/Functional' -wholename '*Test.php' | parallel --gnu 'echo; echo "Running functional test suite {}"; .Build/bin/phpunit --bootstrap .Build/vendor/nimut/testing-framework/res/Configuration/FunctionalTestsBootstrap.php {}';
+                        find 'Tests/Functional' -wholename '*Test.php' | parallel --gnu 'echo; echo "Running functional test suite {}"; .Build/bin/phpunit --bootstrap .Build/vendor/nimut/testing-framework/res/Configuration/FunctionalTestsBootstrap.php {}'
                     fi
             -   name: PHP lint
                 run: |
-                    find . -name \*.php ! -path "./.Build/*" | parallel --gnu php -d display_errors=stderr -l {} > /dev/null \;;
+                    find . -name \*.php ! -path "./.Build/*" | parallel --gnu php -d display_errors=stderr -l {} > /dev/null \;
+
+    check-with-sonarcloud:
+        name: ✔ with sonarcloud scanner
+        needs: running-stable-tests
+        env:
+            TYPO3: '^8.7 ^9.5 ^10.4 ~11.1.0'
+        runs-on: ubuntu-latest
+        services:
+            mysql:
+                image: mysql:5.7
+                env:
+                    MYSQL_ALLOW_EMPTY_PASSWORD: false
+                    MYSQL_DATABASE: ${{ env.typo3DatabaseName }}
+                    MYSQL_ROOT_PASSWORD: ${{ env.typo3DatabasePassword }}
+                ports:
+                    - 3306
+        steps:
+            -   name: Expose mysql port
+                run: |
+                    echo "typo3DatabasePort=${{ job.services.mysql.ports[3306] }}" >> $GITHUB_ENV
+            -   uses: actions/checkout@v2
+            -   uses: shivammathur/setup-php@v2
+                with:
+                    php-version: 7.4
+                    coverage: xdebug
+                    tools: composer:v1
+            -   name: Composer cache
+                id: composer-cache
+                run: |
+                    echo "::set-output name=dir::$(composer config cache-files-dir)"
+            -   uses: actions/cache@v2
+                with:
+                    path: ${{ steps.composer-cache.outputs.dir }}
+                    key: ${{ runner.os }}-composer-${{ hashFiles('composer.json') }}
+                    restore-keys: |
+                        ${{ runner.os }}-composer-
+            -   name: Prepare
+                run: |
+                    mkdir -p .Log/coverage/ .Log/junit/
+            -   name: Run tests
+                run: |
+                    if [ -d "Tests" ]; then
+                        for TYPO3 in $TYPO3; do
+                            echo
+                            echo "Running TYPO3 version $TYPO3"
+                            echo
+                            echo
+                            git clean -Xdf
+                            composer require --dev --no-progress --no-suggest --no-update nimut/typo3-complete:"$TYPO3"
+                            composer update
+                            git checkout composer.json
+                            VERSION=${TYPO3//[!0-9]/}
+
+                            mkdir -p .Build/public/typo3conf/ext/
+                            if [ ! -L .Build/public/typo3conf/ext/${{ env.extensionKey }} ]; then ln -snvf ../../../../. .Build/public/typo3conf/ext/${{ env.extensionKey }}; fi
+
+                            if [ -d "Tests/Unit" ]; then
+                              echo
+                              echo "Running unit tests"
+                              echo
+                              echo
+                              .Build/bin/phpunit --bootstrap .Build/vendor/nimut/testing-framework/res/Configuration/UnitTestsBootstrap.php --log-junit .Log/junit/unit_$VERSION.xml --coverage-php .Log/coverage/unit_$VERSION.cov  --testsuite unit
+                            fi
+
+                            if [ -d "Tests/Functional" ]; then
+                              echo
+                              echo "Running functional tests"
+                              echo
+                              echo
+                              .Build/bin/phpunit --bootstrap .Build/vendor/nimut/testing-framework/res/Configuration/FunctionalTestsBootstrap.php --log-junit .Log/junit/functional_$VERSION.xml --coverage-php .Log/coverage/functional_$VERSION.cov --testsuite functional
+                            fi
+                        done
+                    fi
+            -   name: Merge reports
+                run: |
+                    composer require --no-progress --no-suggest --no-update nimut/phpunit-merger
+                    composer update
+                    .Build/bin/phpunit-merger coverage .Log/coverage/ .Log/coverage.xml
+                    .Build/bin/phpunit-merger log .Log/junit/ .Log/junit.xml
+            -   uses: sonarsource/sonarcloud-github-action@master
+                env:
+                    SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+                    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
 
     running-dev-tests:
         name: 🏃 dev tests
@@ -126,7 +211,7 @@ jobs:
                 with:
                     php-version: ${{ matrix.php }}
                     coverage: none
-                    tools: composer:v2
+                    tools: composer:v1
             -   name: Composer cache
                 id: composer-cache
                 run: |
@@ -211,7 +296,7 @@ jobs:
                 with:
                     php-version: ${{ matrix.php }}
                     coverage: none
-                    tools: composer:v2
+                    tools: composer:v1
             -   name: Composer cache
                 id: composer-cache
                 run: |
